@@ -39,10 +39,10 @@ impl fmt::Debug for TetrisBoard{
     }
 }
 
-// TODO ブロックの色付け?
-// TODO　ブロックのオフセット 回転の時
-// TODO　ホールド
-// TODO　次のブロックの表示
+// TODO: ブロックの色付け?
+// TODO:　ブロックのオフセット 回転の時
+// TODO:　ホールド
+// TODO:　次のブロックの表示
 
 impl TetrisBoard{
     fn new() -> Self{
