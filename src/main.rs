@@ -39,6 +39,11 @@ impl fmt::Debug for TetrisBoard{
     }
 }
 
+// TODO ブロックの色付け?
+// TODO　ブロックのオフセット 回転の時
+// TODO　ホールド
+// TODO　次のブロックの表示
+
 impl TetrisBoard{
     fn new() -> Self{
         let mut _b = Self::init_board();
@@ -59,6 +64,9 @@ impl TetrisBoard{
     fn rotate_undo(&mut self) {
         self.block_rotate +=3;
         self.block_rotate %=4;
+    }
+    fn add_score(&mut self, pts: i32){
+        self.score += pts;
     }
 
     fn init_board() -> Field{
@@ -173,7 +181,7 @@ fn main() {
 
                     *pos = Position{x:4, y:0};
                     tet.block_placed +=1;
-                    tet.score += erase_lines*erase_lines;
+                    tet.add_score(erase_lines*erase_lines*100);
                     tet.block_rotate = 0;
                     *block = rand::random();        // ブロックが固定されたら変数を変えて出てくるブロックを変える
                 }
@@ -243,7 +251,7 @@ fn main() {
             },
             Ok(Key::Up) => {
                 let mut pos = pos.lock().unwrap();
-                let tet = tet.lock().unwrap();
+                let mut tet = tet.lock().unwrap();
                 let block = block.lock().unwrap();
                 let mut _tmp = 0;
                 let mut new_pos:Position;
@@ -258,6 +266,7 @@ fn main() {
                     _tmp += 1;
                 }
                 *pos = new_pos;
+                tet.add_score(_tmp as i32);
                 TetrisBoard::debug_draw(&tet, &pos, *block);
             },
             Ok(Key::Char(' ')) => {
