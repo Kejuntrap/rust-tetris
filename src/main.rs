@@ -19,6 +19,7 @@ enum TetrisBlocks{
     L,
 }
 type BlockShape =  [[usize; 4]; 4];
+type Field = [uszize; BOARDSIZE];
 
 const BLOCKS: [BlockShape; 7] = [
     [       // I
@@ -72,7 +73,7 @@ struct Position{
 
 #[derive(Clone,Copy,Debug)]
 struct TetrisBoard{
-    tetris_board: [usize;BOARDSIZE],
+    tetris_board: Field,
     score:i32,
 }
 
