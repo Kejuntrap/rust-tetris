@@ -1,10 +1,10 @@
 mod block;
 
 const TETRIS_WIDTH:usize=17;
-const TETRIS_HEIGHT:usize=23;
+const TETRIS_HEIGHT:usize=21;
 const BOARDSIZE:usize=TETRIS_HEIGHT*TETRIS_WIDTH;
 const DELTA:u64=1000;
-const EDGE_WIDTH:usize=3;
+const EDGE_WIDTH:usize=1;
 
 use std::{thread, time};
 use getch_rs::{Getch, Key};
@@ -32,6 +32,7 @@ struct TetrisBoard{
     score:i32,
     block_placed: i32,
     block_rotate: u8,
+    block_offset_x: i8,
 }
 impl fmt::Debug for TetrisBoard{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -48,6 +49,7 @@ impl TetrisBoard{
             score:0,
             block_placed:0,
             block_rotate:_r,
+            block_offset_x: 0,
         }
     }
 
@@ -65,7 +67,7 @@ impl TetrisBoard{
         let mut _b:Field = [0; BOARDSIZE];
         for i in 0..BOARDSIZE{
 
-            if i%TETRIS_WIDTH == EDGE_WIDTH -1  || i%TETRIS_WIDTH == TETRIS_WIDTH-EDGE_WIDTH || i/TETRIS_WIDTH == TETRIS_HEIGHT-EDGE_WIDTH {
+            if i%TETRIS_WIDTH < EDGE_WIDTH || i%TETRIS_WIDTH >= TETRIS_WIDTH-EDGE_WIDTH || i/TETRIS_WIDTH >= TETRIS_HEIGHT-EDGE_WIDTH {
                 _b[i] = 1;
             }
             else{
@@ -88,12 +90,28 @@ impl TetrisBoard{
         }
 
         println!("\x1b[2J\x1b[H\x1b[?25l");
-        for i in 0..=TETRIS_HEIGHT-EDGE_WIDTH{ //y
-            for j in EDGE_WIDTH-1..=TETRIS_WIDTH-EDGE_WIDTH{
-                match field_buffer[i*TETRIS_WIDTH+j]{
-                    0 => print!(". "),
-                    _ => print!("[]"),
-                }
+        for i in 0..TETRIS_HEIGHT{ //y
+           match Self::is_bottom(i){
+                true => {  //x
+                    for j in 0..TETRIS_WIDTH{   // 最底面は表示
+                        print!("--");
+                    }
+                },
+                false => {
+                    for j in 0..TETRIS_WIDTH{
+                        match Self::is_yokohasikko(j){
+                            false => {
+                                match field_buffer[i*TETRIS_WIDTH+j]{
+                                    0 => print!(". "),
+                                    _ => print!("[]"),
+                                }
+                            },
+                            true => {
+                                print!("[]");
+                            }
+                        }
+                    }
+                },
             }
             println!("");   // 改行
         }
@@ -102,12 +120,26 @@ impl TetrisBoard{
         println!("Now Pointing area is {:?}",pos);
     }
 
+    fn is_yokohasikko(i: usize) -> bool{
+        if i % TETRIS_WIDTH < EDGE_WIDTH || i % TETRIS_WIDTH >= TETRIS_WIDTH - EDGE_WIDTH{       // 両端であるかの判定
+            return true;
+        }
+        return false;
+    }
+
+    fn is_bottom(i: usize) -> bool{     //底面であるかの判定
+        if i % TETRIS_HEIGHT >=  TETRIS_HEIGHT -1 {
+            return true;
+        }
+        return false;
+    }
+
     fn is_collision(&self, pos: &Position, block: TetrisBlocks) -> bool{        // 当たり判定
         let _b : BlockShape = BLOCKS[block as usize].rotate(self.block_rotate);
         for y in 0..4{
             for x in 0..4{
                 if y+pos.y < TETRIS_HEIGHT && x+pos.x < TETRIS_WIDTH{
-                    if self.tetris_board[(y+pos.y)*TETRIS_WIDTH+x+pos.x] != 0 && _b[y][x] != 0 {
+                    if self.tetris_board[(y+pos.y)*TETRIS_WIDTH+x+pos.x] == 1 && _b[y][x] == 1 {
                         return true;
                     }
                 }
@@ -148,14 +180,14 @@ fn main() {
                     let _b : BlockShape = BLOCKS[*block as usize].rotate(tet.block_rotate);
                     for y in 0..4 {
                         for x in 0..4 {
-                            if _b[y][x] != 0 {
-                                tet.tetris_board[(y+pos.y)*TETRIS_WIDTH+x+pos.x] = _b[y][x];   // block を固定
+                            if _b[y][x] == 1 {
+                                tet.tetris_board[(y+pos.y)*TETRIS_WIDTH+x+pos.x] = 1;   // block を固定
                             }
                         }
                     }
                     for y in 1..TETRIS_HEIGHT-EDGE_WIDTH {
                         let mut is_erase_line = true;
-                        for x in EDGE_WIDTH..TETRIS_WIDTH - EDGE_WIDTH {
+                        for x in 1..TETRIS_WIDTH - EDGE_WIDTH {
                             if tet.tetris_board[y*TETRIS_WIDTH+x] == 0 {
                                 is_erase_line = false;
                                 break;
