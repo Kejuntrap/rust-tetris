@@ -1,7 +1,6 @@
 mod block;
 mod game;
 
-use block::{TetrisBlocks};
 use game::{DELTA, Position, TetrisBoard};
 use getch_rs::{Getch, Key};
 use std::sync::{Arc, Mutex};

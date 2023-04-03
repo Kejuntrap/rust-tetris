@@ -4,7 +4,7 @@ use crate::block::Rotate;
 use crate::block::TetrisBlocks;
 use crate::block::BLOCKS;
 use crate::block::BlockShape;
-use crate::block::{BlockColor, tetris_blocks, COLOR_TABLE,
+use crate::block::{BlockColor, COLOR_TABLE,
     tetris_blocks::WALL as W,
     tetris_blocks::NONE as NONE,
     tetris_blocks::GHOST as GHOST,
