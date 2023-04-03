@@ -1,13 +1,11 @@
 use std::fmt;
 
+use crate::block::BlockShape;
 use crate::block::Rotate;
 use crate::block::TetrisBlocks;
 use crate::block::BLOCKS;
-use crate::block::BlockShape;
-use crate::block::{BlockColor, COLOR_TABLE,
-    tetris_blocks::WALL as W,
-    tetris_blocks::NONE as NONE,
-    tetris_blocks::GHOST as GHOST,
+use crate::block::{
+    tetris_blocks::GHOST, tetris_blocks::NONE, tetris_blocks::WALL as W, BlockColor, COLOR_TABLE,
 };
 
 pub const BASE_WIDTH: usize = 10;
@@ -18,7 +16,7 @@ pub const TETRIS_HEIGHT: usize = BASE_HEIGHT + EDGE_WIDTH;
 pub const BOARDSIZE: usize = TETRIS_HEIGHT * TETRIS_WIDTH;
 pub const DELTA: u64 = 1000;
 
-pub const LINE_BASE_SCORE:i32 = 100;
+pub const LINE_BASE_SCORE: i32 = 100;
 
 pub type Field = [BlockColor; BOARDSIZE];
 
@@ -32,9 +30,9 @@ impl fmt::Debug for Position {
         write!(f, "{{ x : {} ,  y : {} }}", self.x, self.y)
     }
 }
-impl Position{
-    pub fn init() -> Self{
-        Position{x:4,y:0}
+impl Position {
+    pub fn init() -> Self {
+        Position { x: 4, y: 0 }
     }
 }
 
@@ -72,9 +70,9 @@ impl TetrisBoard {
         let mut _b = Self::init_board();
         let mut _r: u8 = 0;
         let mut _p: Position = Position::init();
-        let _blockshape =  rand::random::<TetrisBlocks>();
-        let mut _next_blocks: [TetrisBlocks;3] = [TetrisBlocks::I; 3];
-        for _i in 0..3{
+        let _blockshape = rand::random::<TetrisBlocks>();
+        let mut _next_blocks: [TetrisBlocks; 3] = [TetrisBlocks::I; 3];
+        for _i in 0..3 {
             _next_blocks[_i] = rand::random::<TetrisBlocks>();
         }
         TetrisBoard {
@@ -85,13 +83,18 @@ impl TetrisBoard {
             block_now_shape: _blockshape,
             block_position: _p,
             block_next_three: _next_blocks,
-            ghost: Self::calc_init_ghost(_b,_r,_p,_blockshape),
+            ghost: Self::calc_init_ghost(_b, _r, _p, _blockshape),
             block_hold: TetrisBlocks::NONE,
             hold_rotate: 0,
         }
     }
 
-    pub fn calc_init_ghost(_board: Field,_rotate: u8,_pos: Position, _blks: TetrisBlocks) -> Position{
+    pub fn calc_init_ghost(
+        _board: Field,
+        _rotate: u8,
+        _pos: Position,
+        _blks: TetrisBlocks,
+    ) -> Position {
         let mut new_pos: Position;
         let mut _tmp = 0;
         let _b: BlockShape = BLOCKS[_blks as usize].rotate(_rotate);
@@ -100,10 +103,10 @@ impl TetrisBoard {
                 x: _pos.x,
                 y: _pos.y + _tmp,
             };
-            let mut _result:bool = false;
+            let mut _result: bool = false;
             for y in 0..4 {
                 for x in 0..4 {
-                    if y +new_pos.y + 1>= TETRIS_HEIGHT || x + new_pos.x >= TETRIS_WIDTH {
+                    if y + new_pos.y + 1 >= TETRIS_HEIGHT || x + new_pos.x >= TETRIS_WIDTH {
                         continue;
                     }
                     if _board[(y + new_pos.y + 1) * TETRIS_WIDTH + x + new_pos.x] != NONE
@@ -113,16 +116,14 @@ impl TetrisBoard {
                     }
                 }
             }
-            if _result{
+            if _result {
                 break;
-            }else{
+            } else {
                 _tmp += 1;
             }
-            
         }
         return new_pos;
     }
-
 
     pub fn rotate(&mut self) {
         //! 回転させる関数 基本的に左回り
@@ -148,7 +149,7 @@ impl TetrisBoard {
                 || i % TETRIS_WIDTH == TETRIS_WIDTH - EDGE_WIDTH
                 || i / TETRIS_WIDTH == TETRIS_HEIGHT - EDGE_WIDTH
             {
-                _b[i] = W;      // 壁の領域に壁を設置する
+                _b[i] = W; // 壁の領域に壁を設置する
             } else {
                 _b[i] = NONE;
             }
@@ -160,9 +161,9 @@ impl TetrisBoard {
         //! 盤面を描画する関数 Debug情報込みで余計なものも多い
         let mut field_buffer = field.tetris_board.clone();
         let _b: BlockShape = BLOCKS[field.block_now_shape as usize].rotate(field.block_rotate);
-        let mut _x:usize;   // 一次的変数
-        let mut _y:usize;   // 一次的変数
-        let mut _board_position:usize;  // 一次的変数
+        let mut _x: usize; // 一次的変数
+        let mut _y: usize; // 一次的変数
+        let mut _board_position: usize; // 一次的変数
         let _g = field.ghost;
         for y in 0..4 {
             for x in 0..4 {
@@ -171,7 +172,7 @@ impl TetrisBoard {
                     _y = y + field.block_position.y;
                     _board_position = _y * TETRIS_WIDTH + _x;
                     field_buffer[_board_position] = _b[y][x];
-                    field_buffer[(_g.y+y)*TETRIS_WIDTH+_g.x+x] = GHOST;
+                    field_buffer[(_g.y + y) * TETRIS_WIDTH + _g.x + x] = GHOST;
                 }
             }
         }
@@ -230,7 +231,7 @@ impl TetrisBoard {
         self.ghost = new_pos;
     }
 
-    pub fn erase_lines(&mut self){
+    pub fn erase_lines(&mut self) {
         //! ラインを消去する関数
         let mut erase_lines = 0;
         for y in 1..TETRIS_HEIGHT - EDGE_WIDTH {
@@ -254,72 +255,73 @@ impl TetrisBoard {
         self.add_score(erase_lines * erase_lines * LINE_BASE_SCORE);
     }
 
-    pub fn next_block(&mut self) -> Result<(), ()>{
+    pub fn next_block(&mut self) -> Result<(), ()> {
         //! 次に表示させるブロックの処理を行う関数
         self.block_placed += 1;
         self.block_rotate = 0;
-        self.block_position = Position::init();       // 次のブロックの処理
+        self.block_position = Position::init(); // 次のブロックの処理
         self.block_now_shape = self.block_next_three[0]; // ブロックが固定されたら変数を変えて出てくるブロックを変える
 
-        let mut _new_three_array:[TetrisBlocks; 3] = [TetrisBlocks::I; 3];
+        let mut _new_three_array: [TetrisBlocks; 3] = [TetrisBlocks::I; 3];
         _new_three_array[0] = self.block_next_three[1];
         _new_three_array[1] = self.block_next_three[2];
         _new_three_array[2] = rand::random::<TetrisBlocks>();
-        self.block_next_three = _new_three_array;       // 1つずらす
+        self.block_next_three = _new_three_array; // 1つずらす
 
         self.ghost_pos();
 
-        if self.is_collision(&self.block_position){
+        if self.is_collision(&self.block_position) {
             Err(())
-        }else{
+        } else {
             Ok(())
         }
     }
 
-    pub fn hold_block(&mut self) -> Result<(), ()>{
+    pub fn hold_block(&mut self) -> Result<(), ()> {
         //! ホールドに関する関数
-        
-        if self.block_hold as usize != TetrisBlocks::NONE as usize {    //HOLDをすでにしてるなら
+
+        if self.block_hold as usize != TetrisBlocks::NONE as usize {
+            //HOLDをすでにしてるなら
             let _tmpblock = self.block_now_shape;
-            let _tmprotate: u8= self.block_rotate;
+            let _tmprotate: u8 = self.block_rotate;
 
             self.block_now_shape = self.block_hold;
             self.block_rotate = self.hold_rotate;
-            
+
             self.block_hold = _tmpblock;
             self.block_rotate = _tmprotate;
 
             self.block_position = Position::init();
-
-        }else {         // 始めてHOLDなら
+        } else {
+            // 始めてHOLDなら
             self.block_hold = self.block_now_shape;
             self.hold_rotate = self.block_rotate;
 
-            self.block_position = Position::init();       // 次のブロックの処理
+            self.block_position = Position::init(); // 次のブロックの処理
             self.block_now_shape = self.block_next_three[0]; // ブロックが固定されたら変数を変えて出てくるブロックを変える
 
-            let mut _new_three_array:[TetrisBlocks; 3] = [TetrisBlocks::I; 3];
+            let mut _new_three_array: [TetrisBlocks; 3] = [TetrisBlocks::I; 3];
             _new_three_array[0] = self.block_next_three[1];
             _new_three_array[1] = self.block_next_three[2];
             _new_three_array[2] = rand::random::<TetrisBlocks>();
-            self.block_next_three = _new_three_array;       // 1つずらす            
+            self.block_next_three = _new_three_array; // 1つずらす
         }
 
-        self.ghost_pos();       //ゴースト表示
-        if self.is_collision(&self.block_position){
+        self.ghost_pos(); //ゴースト表示
+        if self.is_collision(&self.block_position) {
             Err(())
-        }else{
+        } else {
             Ok(())
         }
     }
 
-    pub fn gameover(&self){
+    pub fn gameover(&self) {
         TetrisBoard::debug_draw(self);
         println!("GAMEOVER");
         println!("press `q` key to exit");
     }
 
-    pub fn block_fixing(&mut self){
+    pub fn block_fixing(&mut self) {
         //! ブロックの固定を行う関数
         let _b: BlockShape = BLOCKS[self.block_now_shape as usize].rotate(self.block_rotate);
         let gy = self.block_position.y;
@@ -327,7 +329,7 @@ impl TetrisBoard {
         for y in 0..4 {
             for x in 0..4 {
                 if _b[y][x] != NONE {
-                    self.tetris_board[(y + gy) * TETRIS_WIDTH + x + gx ] = _b[y][x];
+                    self.tetris_board[(y + gy) * TETRIS_WIDTH + x + gx] = _b[y][x];
                     // block を固定
                 }
             }
@@ -380,11 +382,10 @@ impl TetrisBoard {
             },
         ];
         for _pos in diff_pos {
-            if ! Self::is_collision(&self, &_pos) {
+            if !Self::is_collision(&self, &_pos) {
                 return Ok(_pos);
             }
         }
         Err(())
     }
 }
-

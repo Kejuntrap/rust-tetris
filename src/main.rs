@@ -1,18 +1,15 @@
 mod block;
 mod game;
 
-use game::{DELTA, Position, TetrisBoard};
+use game::{Position, TetrisBoard, DELTA};
 use getch_rs::{Getch, Key};
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
 
-
 fn main() {
     println!("\x1b[2J\x1b[H\x1b[?25l");
     let tet = Arc::new(Mutex::new(TetrisBoard::new()));
-    TetrisBoard::debug_draw(
-        &tet.lock().unwrap(),
-    ); //draw
+    TetrisBoard::debug_draw(&tet.lock().unwrap()); //draw
     {
         let tet = Arc::clone(&tet);
         let _ = thread::spawn(move || {
@@ -29,9 +26,10 @@ fn main() {
                     tet.block_position = new_pos; // free fall and position update
                 } else {
                     //cannot move downward anymore
-                    tet.block_fixing();     // ライン固定
-                    tet.erase_lines();      // ライン消去
-                    if tet.next_block().is_err(){      // ブロック生成不可能になったらGame Over
+                    tet.block_fixing(); // ライン固定
+                    tet.erase_lines(); // ライン消去
+                    if tet.next_block().is_err() {
+                        // ブロック生成不可能になったらGame Over
                         tet.gameover();
                         break;
                     }
@@ -52,13 +50,17 @@ fn main() {
             Ok(Key::Left) => {
                 let mut tet = tet.lock().unwrap();
                 let new_pos = Position {
-                    x: tet.block_position.x.checked_sub(1).unwrap_or_else(|| tet.block_position.x),     // 符号なしでマイナスにならないようにする
+                    x: tet
+                        .block_position
+                        .x
+                        .checked_sub(1)
+                        .unwrap_or_else(|| tet.block_position.x), // 符号なしでマイナスにならないようにする
                     y: tet.block_position.y,
-                 };
+                };
                 if !TetrisBoard::is_collision(&tet, &new_pos) {
                     tet.block_position = new_pos;
                 }
-                tet.ghost_pos();        // ゴーストの計算
+                tet.ghost_pos(); // ゴーストの計算
                 TetrisBoard::debug_draw(&tet);
             }
             Ok(Key::Right) => {
@@ -70,7 +72,7 @@ fn main() {
                 if !TetrisBoard::is_collision(&tet, &new_pos) {
                     tet.block_position = new_pos;
                 }
-                tet.ghost_pos();        // ゴーストの計算
+                tet.ghost_pos(); // ゴーストの計算
                 TetrisBoard::debug_draw(&tet);
             }
             Ok(Key::Down) => {
@@ -82,7 +84,7 @@ fn main() {
                 if !TetrisBoard::is_collision(&tet, &new_pos) {
                     tet.block_position = new_pos;
                 }
-                tet.ghost_pos();        // ゴーストの計算
+                tet.ghost_pos(); // ゴーストの計算
                 TetrisBoard::debug_draw(&tet);
             }
             Ok(Key::Up) => {
@@ -114,32 +116,35 @@ fn main() {
 
                 tet.rotate();
 
-                let new_pos = Position { x: tet.block_position.x, y: tet.block_position.y };
+                let new_pos = Position {
+                    x: tet.block_position.x,
+                    y: tet.block_position.y,
+                };
                 if !TetrisBoard::is_collision(&tet, &new_pos) {
                     tet.block_position = new_pos;
-                } else if let Ok(new_pos) = TetrisBoard::super_rotation(&tet){
-                    tet.block_position = new_pos; 
-
-                }else{
+                } else if let Ok(new_pos) = TetrisBoard::super_rotation(&tet) {
+                    tet.block_position = new_pos;
+                } else {
                     tet.rotate_undo();
                 }
-                tet.ghost_pos();        // ゴーストの計算
+                tet.ghost_pos(); // ゴーストの計算
                 TetrisBoard::debug_draw(&tet);
-            },
-            Ok(Key::Char('h')) => {     // ホールド
+            }
+            Ok(Key::Char('h')) => {
+                // ホールド
                 let mut tet = tet.lock().unwrap();
-                if tet.hold_block().is_err(){      // ブロック生成不可能になったらGame Over
+                if tet.hold_block().is_err() {
+                    // ブロック生成不可能になったらGame Over
                     tet.gameover();
                     break;
                 }
             }
-        _ => (),
+            _ => (),
         }
     }
     quit();
 }
 
-
-pub fn quit(){
+pub fn quit() {
     println!("\x1b[?25h");
 }
