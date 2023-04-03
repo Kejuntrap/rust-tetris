@@ -159,6 +159,7 @@ impl TetrisBoard {
 
     pub fn debug_draw(field: &TetrisBoard) {
         //! 盤面を描画する関数 Debug情報込みで余計なものも多い
+        
         let mut field_buffer = field.tetris_board.clone();
         let _b: BlockShape = BLOCKS[field.block_now_shape as usize].rotate(field.block_rotate);
         let mut _x: usize; // 一次的変数
@@ -176,18 +177,19 @@ impl TetrisBoard {
                 }
             }
         }
-
-        println!("\x1b[H");
+        println!("\x1b[2J\x1b[H\x1b[?25l");
         for i in 0..=TETRIS_HEIGHT - EDGE_WIDTH {
             //y
             for j in EDGE_WIDTH - 1..=TETRIS_WIDTH - EDGE_WIDTH {
                 print!("{}", COLOR_TABLE[field_buffer[i * TETRIS_WIDTH + j]]);
             }
+            print!("\x1b[49;0;0;0m "); // リセット
             println!(); // 改行
         }
         println!("Now Block is {:?}", field.block_now_shape);
         println!("{:?}", field);
         println!("Now Pointing area is {:?}", field.block_position);
+        print!("\x1b[49;0;0;0m "); // リセット
     }
 
     pub fn is_collision(&self, pos: &Position) -> bool {
