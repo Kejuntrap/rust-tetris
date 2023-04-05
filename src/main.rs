@@ -15,9 +15,8 @@ fn main() {
         let _ = thread::spawn(move || {
             loop {
                 thread::sleep(time::Duration::from_millis(DELTA)); // wait for delta
-                                                                   //free fall
                 let mut tet = tet.lock().unwrap();
-
+                // 自由落下とボードの更新
                 let new_pos = Position {
                     x: tet.block_position.x,
                     y: tet.block_position.y + 1,
@@ -34,7 +33,7 @@ fn main() {
                         break;
                     }
                 }
-                TetrisBoard::debug_draw(&tet);
+                tet.debug_draw();
             }
         });
     }
@@ -49,86 +48,34 @@ fn main() {
             }
             Ok(Key::Left) => {
                 let mut tet = tet.lock().unwrap();
-                let new_pos = Position {
-                    x: tet
-                        .block_position
-                        .x
-                        .checked_sub(1)
-                        .unwrap_or_else(|| tet.block_position.x), // 符号なしでマイナスにならないようにする
-                    y: tet.block_position.y,
-                };
-                if !TetrisBoard::is_collision(&tet, &new_pos) {
-                    tet.block_position = new_pos;
-                }
+                tet.move_left(1);
                 tet.ghost_pos(); // ゴーストの計算
-                TetrisBoard::debug_draw(&tet);
+                tet.debug_draw();
             }
             Ok(Key::Right) => {
                 let mut tet = tet.lock().unwrap();
-                let new_pos = Position {
-                    x: tet.block_position.x + 1,
-                    y: tet.block_position.y,
-                };
-                if !TetrisBoard::is_collision(&tet, &new_pos) {
-                    tet.block_position = new_pos;
-                }
+                tet.move_right(1);
                 tet.ghost_pos(); // ゴーストの計算
-                TetrisBoard::debug_draw(&tet);
+                tet.debug_draw();
             }
             Ok(Key::Down) => {
                 let mut tet = tet.lock().unwrap();
-                let new_pos = Position {
-                    x: tet.block_position.x,
-                    y: tet.block_position.y + 1,
-                };
-                if !TetrisBoard::is_collision(&tet, &new_pos) {
-                    tet.block_position = new_pos;
-                }
+                tet.move_down(1);
                 tet.ghost_pos(); // ゴーストの計算
-                TetrisBoard::debug_draw(&tet);
+                tet.debug_draw();
             }
             Ok(Key::Up) => {
                 let mut tet = tet.lock().unwrap();
-                let mut _tmp = 0;
-                let mut new_pos: Position;
-                loop {
-                    new_pos = Position {
-                        x: tet.block_position.x,
-                        y: tet.block_position.y + _tmp,
-                    };
-                    if TetrisBoard::is_collision(
-                        &tet,
-                        &Position {
-                            x: tet.block_position.x,
-                            y: new_pos.y + 1,
-                        },
-                    ) {
-                        break;
-                    }
-                    _tmp += 1;
-                }
-                tet.block_position = new_pos;
-                tet.add_score(_tmp as i32);
-                TetrisBoard::debug_draw(&tet);
+                tet.hard_drop();        // すぐ次のブロックの処理になるのでゴースト計算をしなくてよい
+                tet.debug_draw();
             }
             Ok(Key::Char(' ')) => {
                 let mut tet = tet.lock().unwrap();
 
                 tet.rotate();
-
-                let new_pos = Position {
-                    x: tet.block_position.x,
-                    y: tet.block_position.y,
-                };
-                if !TetrisBoard::is_collision(&tet, &new_pos) {
-                    tet.block_position = new_pos;
-                } else if let Ok(new_pos) = TetrisBoard::super_rotation(&tet) {
-                    tet.block_position = new_pos;
-                } else {
-                    tet.rotate_undo();
-                }
+                tet.check_rotate();
                 tet.ghost_pos(); // ゴーストの計算
-                TetrisBoard::debug_draw(&tet);
+                tet.debug_draw();
             }
             Ok(Key::Char('h')) => {
                 // ホールド

@@ -157,23 +157,23 @@ impl TetrisBoard {
         return _b;
     }
 
-    pub fn debug_draw(field: &TetrisBoard) {
+    pub fn debug_draw(&self) {
         //! 盤面を描画する関数 Debug情報込みで余計なものも多い
-        
-        let mut field_buffer = field.tetris_board.clone();
-        let _b: BlockShape = BLOCKS[field.block_now_shape as usize].rotate(field.block_rotate);
+
+        let mut _buffer = self.tetris_board.clone();
+        let _b: BlockShape = BLOCKS[self.block_now_shape as usize].rotate(self.block_rotate);
         let mut _x: usize; // 一次的変数
         let mut _y: usize; // 一次的変数
         let mut _board_position: usize; // 一次的変数
-        let _g = field.ghost;
+        let _g = self.ghost;
         for y in 0..4 {
             for x in 0..4 {
                 if _b[y][x] != NONE {
-                    _x = x + field.block_position.x;
-                    _y = y + field.block_position.y;
+                    _x = x + self.block_position.x;
+                    _y = y + self.block_position.y;
                     _board_position = _y * TETRIS_WIDTH + _x;
-                    field_buffer[_board_position] = _b[y][x];
-                    field_buffer[(_g.y + y) * TETRIS_WIDTH + _g.x + x] = GHOST;
+                    _buffer[_board_position] = _b[y][x];
+                    _buffer[(_g.y + y) * TETRIS_WIDTH + _g.x + x] = GHOST;
                 }
             }
         }
@@ -181,14 +181,14 @@ impl TetrisBoard {
         for i in 0..=TETRIS_HEIGHT - EDGE_WIDTH {
             //y
             for j in EDGE_WIDTH - 1..=TETRIS_WIDTH - EDGE_WIDTH {
-                print!("{}", COLOR_TABLE[field_buffer[i * TETRIS_WIDTH + j]]);
+                print!("{}", COLOR_TABLE[_buffer[i * TETRIS_WIDTH + j]]);
             }
             print!("\x1b[49;0;0;0m "); // リセット
             println!(); // 改行
         }
-        println!("Now Block is {:?}", field.block_now_shape);
-        println!("{:?}", field);
-        println!("Now Pointing area is {:?}", field.block_position);
+        println!("Now Block is {:?}", self.block_now_shape);
+        println!("{:?}", self);
+        println!("Now Pointing area is {:?}", self.block_position);
         print!("\x1b[49;0;0;0m "); // リセット
     }
 
@@ -318,7 +318,7 @@ impl TetrisBoard {
     }
 
     pub fn gameover(&self) {
-        TetrisBoard::debug_draw(self);
+        self.debug_draw();
         println!("GAMEOVER");
         println!("press `q` key to exit");
     }
@@ -389,5 +389,85 @@ impl TetrisBoard {
             }
         }
         Err(())
+    }
+
+    pub fn move_left(&mut self, _diff: usize) {
+        //! 左に動かす関数
+        let new_pos = Position {
+            x: self
+                .block_position
+                .x
+                .checked_sub(_diff)
+                .unwrap_or_else(|| self.block_position.x), // 符号なしでマイナスにならないようにする
+            y: self.block_position.y,
+        };
+        if !TetrisBoard::is_collision(&self, &new_pos) {
+            self.block_position = new_pos;
+        }
+    }
+
+    pub fn move_right(&mut self, _diff: usize) {
+        //! 右に動かす関数
+        let new_pos = Position {
+            x: self
+                .block_position
+                .x
+                .checked_add(_diff)
+                .unwrap_or_else(|| self.block_position.x),
+            y: self.block_position.y,
+        };
+        if !TetrisBoard::is_collision(&self, &new_pos) {
+            self.block_position = new_pos;
+        }
+    }
+
+    pub fn move_down(&mut self, _diff: usize){
+        //! 下に動かす関数
+        let new_pos = Position {
+            x: self.block_position.x,
+            y: self.block_position.y + _diff,
+        };
+        if !TetrisBoard::is_collision(&self, &new_pos) {
+            self.block_position = new_pos;
+        }
+    }
+
+    pub fn hard_drop(&mut self) {
+        //! ハードドロップ（強制落下）させる関数
+        let mut _tmp = 0;
+        let mut new_pos: Position;
+        loop {
+            new_pos = Position {
+                x: self.block_position.x,
+                y: self.block_position.y + _tmp,
+            };
+            if TetrisBoard::is_collision(
+                &self,
+                &Position {
+                    x: self.block_position.x,
+                    y: new_pos.y + 1,
+                },
+            ) {
+                break;
+            }
+            _tmp += 1;
+        }
+        self.block_position = new_pos;
+        self.add_score(_tmp as i32);
+    }
+
+    pub fn check_rotate(&mut self) {
+        //! 回転挙動を検証する関数
+        let new_pos = Position {
+            x: self.block_position.x,
+            y: self.block_position.y,
+        };
+        if !TetrisBoard::is_collision(&self, &new_pos) {
+            self.block_position = new_pos;
+        } else if let Ok(new_pos) = TetrisBoard::super_rotation(&self) {
+            self.block_position = new_pos;
+        } else {
+            self.rotate_undo();
+        }
     }
 }
